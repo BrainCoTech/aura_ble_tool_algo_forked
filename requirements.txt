@@ -1,0 +1,11 @@
+pyqtgraph==0.12.4
+pyside6==6.4.2
+ruamel.yaml
+loguru==0.7.0
+qt_material==2.12
+bleak==0.20.2
+protobuf==3.20.0
+scipy==1.7.3
+py7zr==0.20.5
+pyinstaller==5.10.1
+matplotlib==3.5.3

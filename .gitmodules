@@ -1,0 +1,3 @@
+[submodule "aura-proto"]
+	path = aura-proto
+	url = git@github.com:BrainCoTech/aura-proto.git

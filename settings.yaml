@@ -1,0 +1,35 @@
+BASIC:
+  main_window_title: Aura_Demo_Tool
+  window_in_seconds: 5
+
+TOOL_CONFIG:
+
+
+PROTO_CONFIG:
+  proto_path_structure:
+  - [.]
+  - [proto, generated, python]
+  header_version: 1
+  header:
+    magic_numbers:
+      - !!binary |
+        Qg==
+      - !!binary |
+        Ug==
+      - !!binary |
+        Tg==
+      - !!binary |
+        Qw==
+    payload_version: 15
+    payload_length: 2
+    packet_crc16: 2
+  proto_class:
+    0,0:
+    - AuraReq
+    - AuraResp
+
+
+BLE_CONFIG:
+  server_uuid: 4de5a20c-0001-ae0f-bf63-0242ac130002
+  tx_uuid: 4de5a20c-0002-ae0f-bf63-0242ac130002
+  rx_uuid: 4de5a20c-0003-ae0f-bf63-0242ac130002

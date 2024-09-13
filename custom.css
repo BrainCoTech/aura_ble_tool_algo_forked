@@ -1,0 +1,35 @@
+QGroupBox {{
+  text-transform: none;
+  margin: 0px;
+  padding: 0px 0px 0px 0px;
+}}
+QGroupBox::title {{
+  color: white;
+
+}}
+
+QPushButton {{
+  text-transform: none;
+}}
+
+
+QDockWidget {{
+  text-transform: none;
+}}
+
+
+QTabBar {{
+  text-transform: none;
+}}
+
+
+QScrollBar::handle:vertical {{
+  background: #1de9b6;
+}}
+
+QProgressBar {{
+  border-radius: 0;
+  background-color: #4f5b62;
+  text-align: right;
+  color: black;
+}}
