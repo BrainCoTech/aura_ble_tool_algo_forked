@@ -64,11 +64,14 @@ class Gui(ToolBase):
         self.main_tab_widget = QTabWidget()
         self.add_widget_to_center_layout(self.main_tab_widget)
 
+        self._init_imu_ui()
+        self._init_ppg_ui()
+
     def _init_imu_ui(self):
         widget = QWidget()
         layout = QGridLayout()
         widget.setLayout(layout)
-        for title, label in zip(["ACC", "GYRO", "EULAR"], [["x", "y", "z"], ["x", "y", "z"], ["yaw", "pitch", "roll"]]):
+        for title, label in zip(["ACC", "GYRO"], [["x", "y", "z"], ["x", "y", "z"]]):
             plot_widget = MultiCurvesInOnePlot(title, label, ["r", "g", "y"])
             layout.addWidget(plot_widget)
             self.imu_widgets[title] = plot_widget
@@ -79,7 +82,7 @@ class Gui(ToolBase):
         layout = QGridLayout()
         widget.setLayout(layout)
 
-        for title, label in zip(["HR", "RR", "SPO2"], [["hr", "confidence"], ["rr", "confidence"], ["spo2", "confidence"]]):
+        for title, label in zip(["HR", "RR"], [["hr", "confidence"], ["rr", "confidence"]]):
             plot_widget = PlotWidgetWith2Y(title, label[0], label[1], range2=(0, 100))
             layout.addWidget(plot_widget)
             self.ppg_widgets[title] = plot_widget
@@ -107,7 +110,24 @@ class Gui(ToolBase):
         self.append_ble_chart_signal.connect(self.device_widget.on_get_ble_info)
 
     def update_plots(self):
-        pass
+        # imu
+        imu_buffer = self.data_layer.imu_buffer
+        for title, widget in self.imu_widgets.items():
+            for idx, curve in enumerate(widget.curve_list):
+                curve.setData(imu_buffer[title.lower()][idx])
+
+        # ppg
+        ppg_algo = self.data_layer.ppg_algo_buffer
+        ppg_algo_value_list = list(ppg_algo.values())
+        for idx, title in enumerate(["HR", "RR"]):
+            widget = self.ppg_widgets[title]
+            widget.curve_list[0].setData(ppg_algo_value_list[idx * 2])
+            widget.curve_list[1].setData(ppg_algo_value_list[idx * 2 + 1])
+
+        ppg_raw = self.data_layer.ppg_raw_buffer
+        ppg_raw_value_list = list(ppg_raw.values())
+        for idx, curve in enumerate(self.ppg_widgets["RAW"].curve_list):
+            curve.setData(ppg_raw_value_list[idx])
 
     def _on_ble_status_callback(self, status, msg):
         logger.info("ble updated: {}, {}".format(DeviceStatus(status).name, msg))
