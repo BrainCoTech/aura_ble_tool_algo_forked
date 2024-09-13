@@ -23,12 +23,12 @@ from version import VERSION
 
 _PACK_TYPE = "-D"  # -F: 生成单个EXE文件, -D: 生成文件夹
 _USE_PROTOBUF = True  # 是否使用protobuf
-_ADD_IMG_ICON = True  # 是否添加图标
-_EXE_NAME = "Edu_Dongle_Sensor_Demo_Tool"  # 项目生成EXE可执行文件名
-_ICON_PATH_STRUCTURE = ["material", "edu.ico"]  # 图标相对路径结构
+_ADD_IMG_ICON = False  # 是否添加图标
+_EXE_NAME = "Aura_Demo_Tool"  # 项目生成EXE可执行文件名
+_ICON_PATH_STRUCTURE = []  # 图标相对路径结构
 _PROTO_PATH_STRUCTURE = ["proto", "generated", "python"]  # protobuf python文件夹相对路径结构 例: ["mobius1.5_protobuf", "generated", "python"]
 _COPY_FILES_PATH = ['settings.yaml', 'custom.css']
-_COPY_FOLDER_PATH = ['material']
+_COPY_FOLDER_PATH = []
 
 # ---------------------------------------------- 以下代码不需要修改 ----------------------------------------------
 if "Windows" in platform_sys:
