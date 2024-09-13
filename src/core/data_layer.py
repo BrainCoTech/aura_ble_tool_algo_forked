@@ -124,11 +124,11 @@ class DataLayer(QObject):
         }
 
         # imu
-        parse_node = ParseNode(["SensorApp", "imu_data"], ["seq_num", "sample_rate", "acc_data", "gyro_data"])
+        parse_node = ParseNode(["AuraResp", "sensor_data", "imu_data"], ["seq_num", "sample_rate", "acc_data", "gyro_data"])
         self.data_manage_handler.register_parsed_callback_func(parse_node, self._on_imu_data)
 
         # ppg
-        parse_node = ParseNode(["SensorApp", "ppg_data"], ["seq_num", "report_rate", "mode", "report", "seg_fin"])
+        parse_node = ParseNode(["AuraResp", "sensor_data", "ppg_data"], ["seq_num", "report_rate", "mode", "report", "seg_fin"])
         self.data_manage_handler.register_parsed_callback_func(parse_node, self._on_ppg_data)
 
     @property
@@ -158,8 +158,12 @@ class DataLayer(QObject):
 
         imu_data_class = ImuData(sample_rate, acc_data_list, gyro_data_list, seq_num)
 
-        self._imu_buffer["acc"] = trim_data(np.concatenate([self._imu_buffer['acc'], imu_data_class.acc_data], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
-        self._imu_buffer["gyro"] = trim_data(np.concatenate([self._imu_buffer['gyro'], imu_data_class.gyro_data], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
+        # print(len(acc_data_list[0]), len(acc_data_list[1]), len(acc_data_list[2]))
+        # print(len(self._imu_buffer["acc"][0]), len(self._imu_buffer["acc"][1]), len(self._imu_buffer["acc"][2]))
+        # print('------------------------------')
+
+        self._imu_buffer["acc"] = trim_data(np.concatenate([self._imu_buffer['acc'], acc_data_list], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
+        self._imu_buffer["gyro"] = trim_data(np.concatenate([self._imu_buffer['gyro'], gyro_data_list], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
 
     def _on_ppg_data(self, node_data: NodeData):
         seq_num = node_data.get_value("seq_num")
