@@ -33,26 +33,26 @@ class AccData(object):
         self.sample_rate = sample_rate
         self.sequence_number = sequence_number
         self.acc_data = acc_data
-
-
-class PpgAlgoData(object):
-    def __init__(self, report):
-        self.op_mode = report.op_mode
-        self.hr = report.hr
-        self.hr_confidence = report.hr_conf
-        self.rr = report.rr
-        self.rr_confidence = report.rr_conf
-        self.activity = report.activity
-        self.r = report.r
-        self.spo2_confidence = report.spo2_conf
-        self.spo2 = report.spo2
-        self.spo2_progress = report.spo2_progress
-        self.spo2_low_signal_quality_flag = report.spo2_lsq_flag
-        self.spo2_motion_flag = report.spo2_mt_flag
-        self.spo2_low_pi_flag = report.spo2_lp_flag
-        self.spo2_unreliable_r_flag = report.spo2_ur_flag
-        self.spo2_state = report.spo2_state
-        self.scd_state = report.scd_state
+#
+#
+# class PpgAlgoData(object):
+#     def __init__(self, report):
+#         self.op_mode = report.op_mode
+#         self.hr = report.hr
+#         self.hr_confidence = report.hr_conf
+#         self.rr = report.rr
+#         self.rr_confidence = report.rr_conf
+#         self.activity = report.activity
+#         self.r = report.r
+#         self.spo2_confidence = report.spo2_conf
+#         self.spo2 = report.spo2
+#         self.spo2_progress = report.spo2_progress
+#         self.spo2_low_signal_quality_flag = report.spo2_lsq_flag
+#         self.spo2_motion_flag = report.spo2_mt_flag
+#         self.spo2_low_pi_flag = report.spo2_lp_flag
+#         self.spo2_unreliable_r_flag = report.spo2_ur_flag
+#         self.spo2_state = report.spo2_state
+#         self.scd_state = report.scd_state
 
 
 class PpgHrResData(object):
@@ -63,8 +63,8 @@ class PpgHrResData(object):
 
 
 class PpgHrvResData(object):
-    def __init__(self, rr: int, rr_conf: int):
-        self.rr = rr
+    def __init__(self, rr_arr: list, rr_conf: int):
+        self.rr_arr = rr_arr
         self.rr_conf = rr_conf
 
 
@@ -182,7 +182,7 @@ class DataLayer(QObject):
             raw_data_list.append(PpgRawData(raw))
 
         hr_data = PpgHrResData(report.hr_res.hr, report.hr_res.hr_conf, report.hr_res.wear)
-        hrv_data = PpgHrvResData(report.hrv_res.rr, report.hrv_res.rr_conf)
+        hrv_data = PpgHrvResData(report.hrv_res.rr_arr, report.hrv_res.rr_conf)
 
         ppg_data_class = PpgData(report_rate=convert_sample_rate,
                                  hr_data=hr_data,
@@ -191,7 +191,7 @@ class DataLayer(QObject):
 
         self._ppg_algo_buffer['hr'].append(hr_data.hr)
         self._ppg_algo_buffer['hr_conf'].append(hr_data.hr_conf)
-        self._ppg_algo_buffer['rr'].append(hrv_data.rr)
+        self._ppg_algo_buffer['rr'].extend(hrv_data.rr_arr)
         self._ppg_algo_buffer['rr_conf'].append(hrv_data.rr_conf)
         for buffer in [self._ppg_algo_buffer['hr'], self._ppg_algo_buffer['hr_conf'], self._ppg_algo_buffer['rr'], self._ppg_algo_buffer['rr_conf']]:
             buffer = trim_data(buffer, 0, WINDOW_IN_SECOND * convert_sample_rate)
