@@ -7,8 +7,7 @@ from PySide6.QtCore import QObject
 from src.config.register_proto import get_proto_class
 from src.config.settings import BASIC
 from src.core.data_handler import ParseNode, NodeData
-from src.utils.public_func import trim_data
-
+from src.utils.public_func import trim_data, save_data_to_file, check_received_sn
 
 WINDOW_IN_SECOND = BASIC["window_in_seconds"]
 
@@ -101,6 +100,7 @@ class PpgData(object):
 
 
 class DataLayer(QObject):
+    _save_data_file_path = ""
 
     def __init__(self, data_manage_handler):
         super().__init__()
@@ -130,6 +130,9 @@ class DataLayer(QObject):
         # ppg
         parse_node = ParseNode(["AuraResp", "sensor_data", "ppg_data"], ["seq_num", "report_rate", "mode", "report", "seg_fin"])
         self.data_manage_handler.register_parsed_callback_func(parse_node, self._on_ppg_data)
+
+    def enable_save_data(self, file_path):
+        self._save_data_file_path = file_path
 
     @property
     def imu_buffer(self):
@@ -165,6 +168,15 @@ class DataLayer(QObject):
         self._imu_buffer["acc"] = trim_data(np.concatenate([self._imu_buffer['acc'], acc_data_list], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
         self._imu_buffer["gyro"] = trim_data(np.concatenate([self._imu_buffer['gyro'], gyro_data_list], 1), 1, WINDOW_IN_SECOND * convert_sample_rate)
 
+        data_dict = {
+            "seq_num": seq_num,
+            "sample_rate": convert_sample_rate,
+            "acc_data": acc_data_list,
+            "gyro_data": gyro_data_list
+        }
+        if self._save_data_file_path:
+            save_data_to_file("{}_imu.txt".format(self._save_data_file_path), data_dict)
+
     def _on_ppg_data(self, node_data: NodeData):
         seq_num = node_data.get_value("seq_num")
         report_rate = node_data.get_value("report_rate")
@@ -196,11 +208,27 @@ class DataLayer(QObject):
         for buffer in [self._ppg_algo_buffer['hr'], self._ppg_algo_buffer['hr_conf'], self._ppg_algo_buffer['rr'], self._ppg_algo_buffer['rr_conf']]:
             buffer = trim_data(buffer, 0, WINDOW_IN_SECOND * convert_sample_rate)
 
+        data_dict = {
+            "seq_num": seq_num,
+            "sample_rate": convert_sample_rate,
+            "hr_data": {"hr": hr_data.hr, "hr_conf": hr_data.hr_conf, "wear_state": hr_data.wear_state},
+            "rr_data": {"rr": hrv_data.rr_arr, "rr_conf": hrv_data.rr_conf}
+        }
+
         if len(ppg_data_class.raw_data):
             self._ppg_raw_buffer['green1'] = trim_data(np.concatenate([self._ppg_raw_buffer['green1'], ppg_data_class.ppg_raw_green1_list], 0), 0, WINDOW_IN_SECOND * convert_sample_rate)
             self._ppg_raw_buffer['green2'] = trim_data(np.concatenate([self._ppg_raw_buffer['green2'], ppg_data_class.ppg_raw_green2_list], 0), 0, WINDOW_IN_SECOND * convert_sample_rate)
             self._ppg_raw_buffer['ir'] = trim_data(np.concatenate([self._ppg_raw_buffer['ir'], ppg_data_class.ppg_raw_ir_list], 0), 0, WINDOW_IN_SECOND * convert_sample_rate)
             self._ppg_raw_buffer['red'] = trim_data(np.concatenate([self._ppg_raw_buffer['red'], ppg_data_class.ppg_raw_red_list], 0), 0, WINDOW_IN_SECOND * convert_sample_rate)
+
+            data_dict["raw_data"] = {"green1": ppg_data_class.ppg_raw_green1_list,
+                                     "green2": ppg_data_class.ppg_raw_green2_list,
+                                     "ir": ppg_data_class.ppg_raw_ir_list,
+                                     "red": ppg_data_class.ppg_raw_red_list,
+                                     }
+
+        if self._save_data_file_path:
+            save_data_to_file("{}_ppg.txt".format(self._save_data_file_path), data_dict)
 
 
 def parse_imu_data(data_bytes):

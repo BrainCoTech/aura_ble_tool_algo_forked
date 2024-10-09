@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QHBoxLayout, QPushButton, QTabWidget, QScrollArea,
 
 from version import VERSION
 from .main_window_base import ToolBase, Direction
+from .widgets.data_logger_dialog import DataLoggerDialog
 
 from ..core.data_layer import DataLayer
 from ..core.device.base import DeviceStatus
@@ -47,6 +48,8 @@ class Gui(ToolBase):
         self.imu_widgets = {}
         self.ppg_widgets = {}
 
+        self.data_logger_dialog = DataLoggerDialog(self)
+
         self.plot_timer = QTimer()
         self.plot_timer.timeout.connect(self.update_plots)
         self.plot_timer.start(50)
@@ -58,11 +61,15 @@ class Gui(ToolBase):
         self._connect_event()
 
     def _connect_event(self):
-        pass
+        self.data_logger_dialog.start_signal.connect(self._on_start_data_logger)
+        self.data_logger_dialog.stop_signal.connect(self._on_stop_data_logger)
 
     def _init_ui(self):
         self.main_tab_widget = QTabWidget()
         self.add_widget_to_center_layout(self.main_tab_widget)
+
+        self.tools_menu = self.menuBar().addMenu("Tools")
+        self.tools_menu.addAction("Data Logger", self.data_logger_dialog.show)
 
         self._init_imu_ui()
         self._init_ppg_ui()
@@ -108,6 +115,18 @@ class Gui(ToolBase):
         self.ble_status_callback_signal.connect(self._on_ble_status_callback)
         self.ble_data_received_callback_signal.connect(self.recv_device_raw_data)
         self.append_ble_chart_signal.connect(self.device_widget.on_get_ble_info)
+
+    def _on_start_data_logger(self, label):
+        folder = os.path.join(DATA_PATH, datetime.datetime.now().strftime("%Y%m%d"))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        file_name = "".join([datetime.datetime.now().strftime("%H-%M-%S"), "_", label])
+        file_path = os.path.join(folder, file_name)
+        self.data_layer.enable_save_data(file_path)
+
+    def _on_stop_data_logger(self):
+        self.data_layer.enable_save_data("")
 
     def update_plots(self):
         # imu
