@@ -2,7 +2,7 @@
 from typing import Optional
 
 import numpy as np
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 
 from src.config.register_proto import get_proto_class
 from src.config.settings import BASIC
@@ -102,6 +102,9 @@ class PpgData(object):
 class DataLayer(QObject):
     _save_data_file_path = ""
 
+    ppg_raw_signal = Signal(list)
+    acc_raw_signal = Signal(list)
+
     def __init__(self, data_manage_handler):
         super().__init__()
         self.data_manage_handler = data_manage_handler
@@ -155,9 +158,10 @@ class DataLayer(QObject):
         if IMU_SR_ENUM[sample_rate].name.split("_")[-1] in ["NONE"]:
             return
 
-        acc_data_list = parse_imu_data(acc_raw)
-        gyro_data_list = parse_imu_data(gyro_raw)
-        convert_sample_rate = convert_imu_sr(IMU_SR_ENUM, sample_rate)
+        acc_data_list = parse_acc_data(parse_imu_data(acc_raw))
+        gyro_data_list = parse_gyro_data(parse_imu_data(gyro_raw))
+        # convert_sample_rate = convert_imu_sr(IMU_SR_ENUM, sample_rate)
+        convert_sample_rate = 25
 
         imu_data_class = ImuData(sample_rate, acc_data_list, gyro_data_list, seq_num)
 
@@ -176,6 +180,7 @@ class DataLayer(QObject):
         }
         if self._save_data_file_path:
             save_data_to_file("{}_imu.txt".format(self._save_data_file_path), data_dict)
+        self.acc_raw_signal.emit(acc_data_list)
 
     def _on_ppg_data(self, node_data: NodeData):
         seq_num = node_data.get_value("seq_num")
@@ -211,8 +216,8 @@ class DataLayer(QObject):
         data_dict = {
             "seq_num": seq_num,
             "sample_rate": convert_sample_rate,
-            "hr_data": {"hr": hr_data.hr, "hr_conf": hr_data.hr_conf, "wear_state": hr_data.wear_state},
-            "rr_data": {"rr": hrv_data.rr_arr, "rr_conf": hrv_data.rr_conf}
+            # "hr_data": {"hr": hr_data.hr, "hr_conf": hr_data.hr_conf, "wear_state": hr_data.wear_state},
+            # "rr_data": {"rr": hrv_data.rr_arr, "rr_conf": hrv_data.rr_conf}
         }
 
         if len(ppg_data_class.raw_data):
@@ -222,13 +227,38 @@ class DataLayer(QObject):
             self._ppg_raw_buffer['red'] = trim_data(np.concatenate([self._ppg_raw_buffer['red'], ppg_data_class.ppg_raw_red_list], 0), 0, WINDOW_IN_SECOND * convert_sample_rate)
 
             data_dict["raw_data"] = {"green1": ppg_data_class.ppg_raw_green1_list,
-                                     "green2": ppg_data_class.ppg_raw_green2_list,
-                                     "ir": ppg_data_class.ppg_raw_ir_list,
-                                     "red": ppg_data_class.ppg_raw_red_list,
+                                     # "green2": ppg_data_class.ppg_raw_green2_list,
+                                     # "ir": ppg_data_class.ppg_raw_ir_list,
+                                     # "red": ppg_data_class.ppg_raw_red_list,
                                      }
 
         if self._save_data_file_path:
             save_data_to_file("{}_ppg.txt".format(self._save_data_file_path), data_dict)
+        self.ppg_raw_signal.emit(ppg_data_class.ppg_raw_green1_list)
+
+
+def parse_acc_data(acc_data):
+    ACCEL_FULL_SCALE = 8.0
+    ACC_ADC_RANGE = 32768.0
+    data = acc_data.copy()
+    for i in range(len(acc_data)):
+        for j in range(len(acc_data[i])):
+            value = acc_data[i][j]
+            value = value * ACCEL_FULL_SCALE / ACC_ADC_RANGE * 9.8  # g - > m/s^2
+            data[i][j] = value
+    return data
+
+
+def parse_gyro_data(gyro_data):
+    GYRO_FULL_SCALE = 2000.0
+    GYRO_ADC_RANGE = 32768.0
+    data = gyro_data.copy()
+    for i in range(len(gyro_data)):
+        for j in range(len(gyro_data[i])):
+            value = gyro_data[i][j]
+            value = value * GYRO_FULL_SCALE / GYRO_ADC_RANGE  # degree/s
+            data[i][j] = value
+    return data
 
 
 def parse_imu_data(data_bytes):

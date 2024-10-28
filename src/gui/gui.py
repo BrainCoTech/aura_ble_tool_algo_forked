@@ -23,6 +23,9 @@ from ..config.settings import PROTO_CONFIG, BLE_CONFIG, TOOL_CONFIG, BASIC
 from ..utils.path import APP_ROOT_PATH
 
 
+from aura_algo import AuraAlgo
+
+
 DATA_PATH = "data"
 
 
@@ -44,6 +47,11 @@ class Gui(ToolBase):
 
         self.data_manage_handler = ToolProtoDataManageHandler()
         self.data_layer = DataLayer(self.data_manage_handler)
+
+        self.aura_algo = AuraAlgo(QIcon(os.path.join(APP_ROOT_PATH, "material", "edu.ico")), mx_ppg=False)
+        self.data_layer.ppg_raw_signal.connect(self.aura_algo.update_ppg)
+        self.data_layer.acc_raw_signal.connect(self.aura_algo.update_imu)
+        self.aura_algo.show()
 
         self.imu_widgets = {}
         self.ppg_widgets = {}
@@ -124,9 +132,11 @@ class Gui(ToolBase):
         file_name = "".join([datetime.datetime.now().strftime("%H-%M-%S"), "_", label])
         file_path = os.path.join(folder, file_name)
         self.data_layer.enable_save_data(file_path)
+        self.aura_algo.enable_data_logger(file_path)
 
     def _on_stop_data_logger(self):
         self.data_layer.enable_save_data("")
+        self.aura_algo.enable_data_logger("")
 
     def update_plots(self):
         # imu
