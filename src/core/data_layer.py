@@ -103,7 +103,7 @@ class DataLayer(QObject):
     _save_data_file_path = ""
 
     ppg_raw_signal = Signal(list)
-    acc_raw_signal = Signal(list)
+    imu_raw_signal = Signal(list)
 
     def __init__(self, data_manage_handler):
         super().__init__()
@@ -180,7 +180,7 @@ class DataLayer(QObject):
         }
         if self._save_data_file_path:
             save_data_to_file("{}_imu.txt".format(self._save_data_file_path), data_dict)
-        self.acc_raw_signal.emit(acc_data_list)
+        self.imu_raw_signal.emit([acc_data_list, gyro_data_list])
 
     def _on_ppg_data(self, node_data: NodeData):
         seq_num = node_data.get_value("seq_num")

@@ -50,7 +50,7 @@ class Gui(ToolBase):
 
         self.aura_algo = AuraAlgo(QIcon(os.path.join(APP_ROOT_PATH, "material", "edu.ico")), mx_ppg=False)
         self.data_layer.ppg_raw_signal.connect(self.aura_algo.update_ppg)
-        self.data_layer.acc_raw_signal.connect(self.aura_algo.update_imu)
+        self.data_layer.imu_raw_signal.connect(self.aura_algo.update_imu)
         self.aura_algo.show()
 
         self.imu_widgets = {}
